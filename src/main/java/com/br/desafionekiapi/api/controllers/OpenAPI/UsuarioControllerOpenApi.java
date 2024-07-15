@@ -19,13 +19,13 @@ public interface UsuarioControllerOpenApi {
 	public UsuarioResponseDTO buscarUsuarioPorId(@PathVariable Integer id);
 
 	@Operation(summary = "Lista todos Usuarios")
-	public ResponseEntity<List<UsuarioResponseDTO>> listarTodosUsuarios();
+	public List<UsuarioResponseDTO> listarTodosUsuarios() throws Exception;
 
 	@Operation(summary = "Atualiza um Usuario")
-	public ResponseEntity<?> atualizarUsuario(@PathVariable Integer usuarioId,
+	public String atualizarUsuario(@PathVariable Integer usuarioId,
 			@RequestBody UsuarioRequestDTO requestDTO);
 
 	@Operation(summary = "Delete um Usuario")
-	public ResponseEntity<?> deletarUsuario(@PathVariable Integer usuarioId);
+	public ResponseEntity<Void> deletarUsuario(@PathVariable Integer usuarioId);
 
 }

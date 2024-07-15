@@ -32,7 +32,7 @@ public class Skills {
 	
 	@NotNull
     @Size(max = 100)
-	@Column(name = "nome", nullable = false)
+	@Column(name = "nome", nullable = false, unique = true)
 	private String nome;
 	
 	@NotNull

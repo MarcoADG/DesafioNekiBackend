@@ -1,17 +1,16 @@
 package com.br.desafionekiapi.domain.services;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.br.desafionekiapi.api.DTO.SkillResponseDTO;
-import com.br.desafionekiapi.api.DTO.assemblers.SkillAssembler;
 import com.br.desafionekiapi.domain.entities.Skills;
-import com.br.desafionekiapi.domain.entities.Usuario;
+import com.br.desafionekiapi.domain.exception.NegocioException;
+import com.br.desafionekiapi.domain.exception.SkillNaoEncontradaException;
 import com.br.desafionekiapi.domain.repositories.SkillsRepository;
-import com.br.desafionekiapi.domain.repositories.UsuarioRepository;
 
 @Service
 public class SkillsService {
@@ -19,17 +18,11 @@ public class SkillsService {
 	@Autowired
 	private SkillsRepository skillsRepository;
 
-	@Autowired
-	private UsuarioRepository usuarioRepository;
-	
-	@Autowired
-	private SkillAssembler skillsAssembler;
-
-	public List<SkillResponseDTO> listarTodasSkills() {
+	public List<Skills> listarTodasSkills() {
 		// Busca todas as skills no banco de dados
-		List<Skills> skills = skillsRepository.findAll();
+		return skillsRepository.findAll();
 
-		return skillsAssembler.toCollectionDTO(skills);
+		//return skillsAssembler.toCollectionDTO(skills);
 	}
 
 	public Skills buscarSkillPorId(Integer skillId) {
@@ -37,7 +30,14 @@ public class SkillsService {
 		return skillsRepository.findById(skillId).orElseThrow(() -> new RuntimeException("Skill não encontrada"));
 	}
 
+	@Transactional
 	public Skills criarSkill(String imagem, String nome, String descricao) {
+		Skills skillExistente = skillsRepository.findByNome(nome);
+		if(skillExistente != null) {
+			throw new NegocioException(
+					String.format("Já existe um usuário cadastrado com o login %s", nome));
+		}
+		
 		// Cria uma nova instância de Skills
 		Skills skill = new Skills();
 		skill.setImagem(imagem);
@@ -48,32 +48,28 @@ public class SkillsService {
 		return skillsRepository.save(skill);
 	}
 
+	@Transactional
 	public Skills atualizarSkill(Integer skillId, String novaImagem, String novoNome, String novaDescricao) {
 		// Busca a skill pelo ID fornecido
-		Skills skill = skillsRepository.findById(skillId)
-				.orElseThrow(() -> new RuntimeException("Skill não encontrada"));
+		Skills skill = buscarSkillPorId(skillId);
 
 		// Atualiza os campos da skill, se os novos valores não forem nulos
-		if (novaImagem != null) {
+		if (novaImagem != null | novoNome != null | novaDescricao != null) {
 			skill.setImagem(novaImagem);
-		}
-		if (novoNome != null) {
 			skill.setNome(novoNome);
-		}
-		if (novaDescricao != null) {
 			skill.setDescricao(novaDescricao);
 		}
-
+		
 		// Salva a atualização no banco de dados e retorna a skill atualizada
 		return skillsRepository.save(skill);
 	}
 
 	public void deletarSkill(Integer skillId) {
-		// Busca a skill pelo ID fornecido
-		Skills skill = skillsRepository.findById(skillId)
-				.orElseThrow(() -> new RuntimeException("Skill não encontrada"));
-
-		// Exclui a skill do banco de dados
-		skillsRepository.delete(skill);
+		try {
+			skillsRepository.deleteById(skillId);
+			skillsRepository.flush();
+		} catch (EmptyResultDataAccessException e) {
+			throw new SkillNaoEncontradaException(skillId);
+		}
 	}
 }

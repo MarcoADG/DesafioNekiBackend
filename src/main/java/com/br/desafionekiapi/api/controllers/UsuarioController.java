@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.br.desafionekiapi.api.DTO.UsuarioRequestDTO;
 import com.br.desafionekiapi.api.DTO.UsuarioResponseDTO;
 import com.br.desafionekiapi.api.DTO.assemblers.UsuarioAssembler;
+import com.br.desafionekiapi.api.controllers.OpenAPI.UsuarioControllerOpenApi;
 import com.br.desafionekiapi.domain.entities.Usuario;
 import com.br.desafionekiapi.domain.exception.NegocioException;
 import com.br.desafionekiapi.domain.exception.UsuarioNaoEncontradoException;
@@ -27,7 +28,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/usuario")
-public class UsuarioController {
+public class UsuarioController implements UsuarioControllerOpenApi {
 
 	@Autowired
 	private UsuarioService usuarioService;
