@@ -1,7 +1,7 @@
 -- Criar tabela usuário
 CREATE TABLE usuario (
     id SERIAL PRIMARY key,
-    login VARCHAR(50) NOT null,
+    login VARCHAR(50) NOT null UNIQUE,
     senha VARCHAR(255) NOT null
 );
 
@@ -20,6 +20,3 @@ create table associacao_skills(
 	usuario_id INT REFERENCES usuario(id),
 	skills_id INT REFERENCES skills(id)
 );
-
-insert into table usuario(login, senha) 
-VALUES ('admin', '$2a$12$j0FRQeLVH66ehEYmYevETO8bNF.qffBm6ufk9z77NATTvFHDpEID6');

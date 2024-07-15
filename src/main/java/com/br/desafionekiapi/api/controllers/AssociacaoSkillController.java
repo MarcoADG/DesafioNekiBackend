@@ -3,6 +3,7 @@ package com.br.desafionekiapi.api.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,15 +14,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.br.desafionekiapi.domain.exception.NegocioException;
+import com.br.desafionekiapi.domain.exception.SkillNaoEncontradaException;
 import com.br.desafionekiapi.api.DTO.AssociacaoSkillRequestDTO;
 import com.br.desafionekiapi.api.DTO.UsuarioSkillDTO;
+import com.br.desafionekiapi.api.DTO.assemblers.UsuarioSkillAssembler;
 import com.br.desafionekiapi.api.controllers.OpenAPI.AssociacaoSkillControllerOpenApi;
+import com.br.desafionekiapi.domain.entities.AssociacaoSkill;
+import com.br.desafionekiapi.domain.exception.UsuarioNaoEncontradoException;
 import com.br.desafionekiapi.domain.filters.SkillsFilter;
 import com.br.desafionekiapi.domain.services.AssociacaoSkillService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/associacoes")
@@ -30,69 +38,67 @@ public class AssociacaoSkillController implements AssociacaoSkillControllerOpenA
 	@Autowired
 	private AssociacaoSkillService associacaoSkillService;
 
+	@Autowired
+	private UsuarioSkillAssembler usuarioSkillAssembler;
+
 	@SecurityRequirement(name = "Bearer Authentication")
 	@GetMapping("/{associacaoSkillId}")
-	public ResponseEntity<?> buscarAssociacaoSkillPorId(@PathVariable Integer associacaoSkillId) {
-		try {
-			return ResponseEntity.ok(associacaoSkillService.buscarAssociacaoSkillPorId(associacaoSkillId));
-		} catch (RuntimeException e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-		}
+	public UsuarioSkillDTO buscarAssociacaoSkillPorId(@PathVariable Integer associacaoSkillId) {
+		AssociacaoSkill skill = associacaoSkillService.buscarAssociacaoSkillPorId(associacaoSkillId);
+
+		return usuarioSkillAssembler.toDTO(skill);
 	}
 
 	@SecurityRequirement(name = "Bearer Authentication")
 	@GetMapping
-	public ResponseEntity<?> listarTodasAssociacoesSkill() {
-		try {
-			return ResponseEntity.ok(associacaoSkillService.listarTodasAssociacoesSkill());
-		} catch (RuntimeException e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-		}
+	public List<UsuarioSkillDTO> listarTodasAssociacoesSkill() {
+		List<AssociacaoSkill> skill = associacaoSkillService.listarTodasAssociacoesSkill();
+
+		return usuarioSkillAssembler.toCollectionDTO(skill);
+
 	}
 
 	@SecurityRequirement(name = "Bearer Authentication")
 	@GetMapping("/usuario/{usuarioId}/skills")
-    public ResponseEntity<?> listarAssociacoesSkillPorUsuarioId(@PathVariable Integer usuarioId, 
-                                                                SkillsFilter filtro, Pageable pageable) {
-        try {
-            List<UsuarioSkillDTO> usuarioSkills = associacaoSkillService.listarSkillsDoUsuario(usuarioId, filtro, pageable);
-            return ResponseEntity.ok(usuarioSkills);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
-    }
+	public Page<UsuarioSkillDTO> listarAssociacoesSkillPorUsuarioId(@PathVariable Integer usuarioId,
+			SkillsFilter filtro, Pageable pageable) {
+		try {
+			return associacaoSkillService.listarSkillsDoUsuario(usuarioId, filtro, pageable);
+		} catch (UsuarioNaoEncontradoException e) {
+			throw new NegocioException(e.getMessage(), e);
+		}
+	}
 
 	@SecurityRequirement(name = "Bearer Authentication")
 	@PostMapping("/associar")
-	public ResponseEntity<?> associarSkillAoUsuario(@RequestBody AssociacaoSkillRequestDTO requestDTO) {
+	@ResponseStatus(HttpStatus.CREATED)
+	public String associarSkillAoUsuario(@RequestBody @Valid AssociacaoSkillRequestDTO requestDTO) {
 		try {
 			associacaoSkillService.associarSkillAoUsuario(requestDTO);
-			return ResponseEntity.status(HttpStatus.CREATED).body("Associação de skill realizada com sucesso");
-		} catch (RuntimeException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+			return "Associação de skill realizada com sucesso";
+		} catch (UsuarioNaoEncontradoException | SkillNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage(), e);
 		}
 	}
 
 	@SecurityRequirement(name = "Bearer Authentication")
 	@PutMapping("/{associacaoSkillId}")
-	public ResponseEntity<?> atualizarAssociacaoSkill(@PathVariable Integer associacaoSkillId,
-			@RequestBody AssociacaoSkillRequestDTO requestDTO) {
+	public String atualizarAssociacaoSkill(@PathVariable Integer associacaoSkillId,
+			@RequestBody @Valid AssociacaoSkillRequestDTO requestDTO) {
 		try {
 			associacaoSkillService.atualizarAssociacaoSkill(associacaoSkillId, requestDTO.getLevel());
-			return ResponseEntity.ok("Associação de skill atualizada com sucesso");
-		} catch (RuntimeException e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+			return "Associação de skill atualizada com sucesso";
+		} catch (UsuarioNaoEncontradoException | SkillNaoEncontradaException e) {
+			throw new NegocioException(e.getMessage(), e);
 		}
 	}
 
 	@SecurityRequirement(name = "Bearer Authentication")
 	@DeleteMapping("/{associacaoSkillId}")
-	public ResponseEntity<?> deletarAssociacaoSkill(@PathVariable Integer associacaoSkillId) {
-		try {
-			associacaoSkillService.excluirAssociacaoSkill(associacaoSkillId);
-			return ResponseEntity.ok("Associação de skill deletada com sucesso");
-		} catch (RuntimeException e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-		}
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public ResponseEntity<Void> deletarAssociacaoSkill(@PathVariable Integer associacaoSkillId) {
+
+		associacaoSkillService.excluirAssociacaoSkill(associacaoSkillId);
+		return ResponseEntity.noContent().build();
 	}
 }

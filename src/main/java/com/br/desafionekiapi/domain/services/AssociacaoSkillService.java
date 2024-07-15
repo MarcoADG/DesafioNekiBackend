@@ -1,23 +1,29 @@
 package com.br.desafionekiapi.domain.services;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.br.desafionekiapi.api.DTO.AssociacaoSkillRequestDTO;
 import com.br.desafionekiapi.api.DTO.UsuarioSkillDTO;
+import com.br.desafionekiapi.api.DTO.assemblers.UsuarioSkillAssembler;
 import com.br.desafionekiapi.domain.entities.AssociacaoSkill;
 import com.br.desafionekiapi.domain.entities.Skills;
 import com.br.desafionekiapi.domain.entities.Usuario;
+import com.br.desafionekiapi.domain.exception.AssociacaoNaoEncontradaException;
+import com.br.desafionekiapi.domain.exception.SkillNaoEncontradaException;
+import com.br.desafionekiapi.domain.exception.UsuarioNaoEncontradoException;
 import com.br.desafionekiapi.domain.filters.SkillsFilter;
 import com.br.desafionekiapi.domain.repositories.AssociacaoSkillRepository;
 import com.br.desafionekiapi.domain.repositories.SkillsRepository;
 import com.br.desafionekiapi.domain.repositories.UsuarioRepository;
 import com.br.desafionekiapi.domain.specs.SkillsSpecs;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class AssociacaoSkillService {
@@ -31,35 +37,26 @@ public class AssociacaoSkillService {
 	@Autowired
 	private AssociacaoSkillRepository associacaoSkillRepository;
 
-	public List<UsuarioSkillDTO> listarSkillsDoUsuario(Integer usuarioId, SkillsFilter filtro, Pageable pageable) {
-        List<UsuarioSkillDTO> usuarioSkills = new ArrayList<>();
+	@Autowired
+	private UsuarioSkillAssembler usuarioSkillAssembler;
 
-        Page<AssociacaoSkill> pageAssociacoes = associacaoSkillRepository.findAll(
-                SkillsSpecs.usandoFiltro(filtro).and(SkillsSpecs.doUsuario(usuarioId)), pageable);
+	public Page<UsuarioSkillDTO> listarSkillsDoUsuario(Integer usuarioId, SkillsFilter filtro, Pageable pageable) {
+		usuarioRepository.findById(usuarioId).orElseThrow(() -> new UsuarioNaoEncontradoException(usuarioId));
+		
+		Page<AssociacaoSkill> pageAssociacoes = associacaoSkillRepository
+				.findAll(SkillsSpecs.usandoFiltro(filtro).and(SkillsSpecs.doUsuario(usuarioId)), pageable);
 
-        for (AssociacaoSkill associacao : pageAssociacoes.getContent()) {
-            UsuarioSkillDTO usuarioSkillDTO = new UsuarioSkillDTO();
-            usuarioSkillDTO.setId(associacao.getId());
-            usuarioSkillDTO.setSkillId(associacao.getSkills().getId());
-            usuarioSkillDTO.setImagem(associacao.getSkills().getImagem());
-            usuarioSkillDTO.setNome(associacao.getSkills().getNome());
-            usuarioSkillDTO.setDescricao(associacao.getSkills().getDescricao());
-            usuarioSkillDTO.setLevel(associacao.getLevel());
-
-            usuarioSkills.add(usuarioSkillDTO);
-        }
-
-        return usuarioSkills;
-    }
+		return usuarioSkillAssembler.toPageDTO(pageAssociacoes);
+	}
 
 	public void associarSkillAoUsuario(AssociacaoSkillRequestDTO requestDTO) {
 		// Buscar o usuário pelo ID
 		Usuario usuario = usuarioRepository.findById(requestDTO.getUsuarioId())
-				.orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+				.orElseThrow(() -> new UsuarioNaoEncontradoException(requestDTO.getUsuarioId()));
 
 		// Buscar a skill pelo ID
 		Skills skill = skillsRepository.findById(requestDTO.getSkillId())
-				.orElseThrow(() -> new RuntimeException("Skill não encontrada"));
+				.orElseThrow(() -> new SkillNaoEncontradaException(requestDTO.getSkillId()));
 
 		// Criar uma nova associação de skill
 		AssociacaoSkill associacaoSkill = new AssociacaoSkill();
@@ -71,10 +68,11 @@ public class AssociacaoSkillService {
 		associacaoSkillRepository.save(associacaoSkill);
 	}
 
+	@Transactional
 	public void atualizarAssociacaoSkill(Integer associacaoSkillId, Integer novoLevel) {
 		// Busca a associação de skill pelo ID
 		AssociacaoSkill associacaoSkill = associacaoSkillRepository.findById(associacaoSkillId)
-				.orElseThrow(() -> new RuntimeException("Associação de skill não encontrada"));
+				.orElseThrow(() -> new AssociacaoNaoEncontradaException(associacaoSkillId));
 
 		// Atualiza o nível da associação de skill
 		associacaoSkill.setLevel(novoLevel);
@@ -83,13 +81,15 @@ public class AssociacaoSkillService {
 		associacaoSkillRepository.save(associacaoSkill);
 	}
 
+	@Transactional
 	public void excluirAssociacaoSkill(Integer associacaoSkillId) {
-		// Busca a associação de skill pelo ID
-		AssociacaoSkill associacaoSkill = associacaoSkillRepository.findById(associacaoSkillId)
-				.orElseThrow(() -> new RuntimeException("Associação de skill não encontrada"));
-
-		// Exclui a associação de skill do banco de dados
-		associacaoSkillRepository.delete(associacaoSkill);
+		try {
+			// Exclui a associação de skill do banco de dados
+			associacaoSkillRepository.deleteById(associacaoSkillId);
+			associacaoSkillRepository.flush();
+		} catch (EmptyResultDataAccessException e) {
+			throw new AssociacaoNaoEncontradaException(associacaoSkillId);
+		}
 	}
 
 	public List<AssociacaoSkill> listarTodasAssociacoesSkill() {
@@ -100,6 +100,6 @@ public class AssociacaoSkillService {
 	public AssociacaoSkill buscarAssociacaoSkillPorId(Integer associacaoSkillId) {
 		// Busca a associação de skill pelo ID
 		return associacaoSkillRepository.findById(associacaoSkillId)
-				.orElseThrow(() -> new RuntimeException("Associação de skill não encontrada"));
+				.orElseThrow(() -> new AssociacaoNaoEncontradaException(associacaoSkillId));
 	}
 }

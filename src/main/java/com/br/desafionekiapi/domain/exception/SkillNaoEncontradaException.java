@@ -9,8 +9,8 @@ public class SkillNaoEncontradaException extends EntidadeNaoEncontradaException 
 		super(mensagem);
 	}
 	
-	public SkillNaoEncontradaException(Integer skillId) {
-		this(String.format("Não existe um usuario com código %d", skillId));
+	public SkillNaoEncontradaException(Integer associacaoSkillId) {
+		this(String.format("Não existe uma skill com código %d", associacaoSkillId));
 	}
 
 }
