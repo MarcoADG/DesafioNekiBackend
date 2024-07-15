@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.br.desafionekiapi.api.DTO.SkillResponseDTO;
+import com.br.desafionekiapi.api.DTO.assemblers.SkillAssembler;
 import com.br.desafionekiapi.domain.entities.Skills;
 import com.br.desafionekiapi.domain.entities.Usuario;
 import com.br.desafionekiapi.domain.repositories.SkillsRepository;
@@ -20,34 +21,20 @@ public class SkillsService {
 
 	@Autowired
 	private UsuarioRepository usuarioRepository;
+	
+	@Autowired
+	private SkillAssembler skillsAssembler;
 
 	public List<SkillResponseDTO> listarTodasSkills() {
 		// Busca todas as skills no banco de dados
 		List<Skills> skills = skillsRepository.findAll();
 
-		// Converte as skills para DTO e retorna
-		return skills.stream().map(skill -> new SkillResponseDTO(skill.getId(), skill.getImagem(), skill.getNome(),
-				skill.getDescricao(), null)).collect(Collectors.toList());
+		return skillsAssembler.toCollectionDTO(skills);
 	}
 
 	public Skills buscarSkillPorId(Integer skillId) {
 		// Busca a skill pelo ID fornecido
 		return skillsRepository.findById(skillId).orElseThrow(() -> new RuntimeException("Skill não encontrada"));
-	}
-
-	public List<SkillResponseDTO> listarSkillsDoUsuario(Integer usuarioId) {
-		// Busca o usuário pelo ID
-		Usuario usuario = usuarioRepository.findById(usuarioId)
-				.orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-		// Obtém as associações de skills do usuário e converte para DTO
-		List<SkillResponseDTO> skillsDTO = usuario.getAssociacaoSkill().stream()
-				.map(associacao -> new SkillResponseDTO(associacao.getSkills().getId(),
-						associacao.getSkills().getImagem(), associacao.getSkills().getNome(),
-						associacao.getSkills().getDescricao(), associacao.getLevel()))
-				.collect(Collectors.toList());
-
-		return skillsDTO;
 	}
 
 	public Skills criarSkill(String imagem, String nome, String descricao) {

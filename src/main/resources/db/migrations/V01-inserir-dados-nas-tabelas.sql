@@ -13,7 +13,7 @@ ALTER TABLE associacao_skills AUTO_INCREMENT = 1;
 
 -- Insert test data for Usuario table
 INSERT INTO usuario (login, senha) VALUES
-('admin', '$2a$12$j0FRQeLVH66ehEYmYevETO8bNF.qffBm6ufk9z77NATTvFHDpEID6'), -- senha: senha1
+('admin', '$2a$12$j0FRQeLVH66ehEYmYevETO8bNF.qffBm6ufk9z77NATTvFHDpEID6'), -- senha: 123
 ('user2', '$2y$12$NSsM4gEOR7MKogflKR7GMeYugkttjNhAJMvFdHrBLaLp2HzlggP5W'); -- senha: senha2
 
 -- Insert test data for Skills table

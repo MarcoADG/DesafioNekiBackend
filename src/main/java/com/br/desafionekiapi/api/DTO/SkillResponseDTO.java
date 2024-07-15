@@ -10,8 +10,6 @@ public class SkillResponseDTO {
 
 	private String descricao;
 
-	private Integer level;
-
 	public Integer getId() {
 		return id;
 	}
@@ -44,21 +42,12 @@ public class SkillResponseDTO {
 		this.descricao = descricao;
 	}
 
-	public Integer getLevel() {
-		return level;
-	}
-
-	public void setLevel(Integer level) {
-		this.level = level;
-	}
-
-	public SkillResponseDTO(Integer id, String imagem, String nome, String descricao, Integer level) {
+	public SkillResponseDTO(Integer id, String imagem, String nome, String descricao) {
 		super();
 		this.id = id;
 		this.imagem = imagem;
 		this.nome = nome;
 		this.descricao = descricao;
-		this.level = level;
 	}
 
 	public SkillResponseDTO() {

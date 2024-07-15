@@ -1,15 +1,15 @@
 package com.br.desafionekiapi.domain.exception;
 
-public class UsuarioNaoEncontradoException extends EntidadeNaoEncontradaException {
+public class UsuarioJaExisteException extends EntidadeNaoEncontradaException {
 
 
 	private static final long serialVersionUID = 1L;
 
-	public UsuarioNaoEncontradoException(String mensagem) {
+	public UsuarioJaExisteException(String mensagem) {
 		super(mensagem);
 	}
 	
-	public UsuarioNaoEncontradoException(Integer skillId) {
+	public UsuarioJaExisteException(Integer skillId) {
 		this(String.format("Não existe um Usuario com código %d", skillId));
 	}
 

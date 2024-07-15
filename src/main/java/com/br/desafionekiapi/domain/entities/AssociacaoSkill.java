@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Entity
@@ -20,15 +21,16 @@ public class AssociacaoSkill {
 	@Column(name = "id", nullable = false)
 	private Integer id;
 
+	@NotNull
 	@Column(name = "level_skill", nullable = false)
 	private Integer level;
 
 	@ManyToOne
-	@JoinColumn(name = "usuario_id", referencedColumnName = "id")
+	@JoinColumn(name = "usuario_id", referencedColumnName = "id", nullable= false)
 	private Usuario usuario;
 
 	@ManyToOne
-	@JoinColumn(name = "skills_id", referencedColumnName = "id")
+	@JoinColumn(name = "skills_id", referencedColumnName = "id", nullable= false)
 	private Skills skills;
 
 	

@@ -9,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
@@ -21,9 +23,13 @@ public class Usuario {
 	@Column(name = "id", nullable = false)
 	private Integer id;
 
+	@NotNull
+    @Size(max = 50)
 	@Column(name = "login", nullable = false, unique = true)
 	private String login;
 
+	@NotNull
+    @Size(max = 255)
 	@Column(name = "senha", nullable = false)
 	private String senha;
 
